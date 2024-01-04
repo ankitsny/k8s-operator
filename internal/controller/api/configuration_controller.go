@@ -14,64 +14,56 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package controller
+package api
 
 import (
 	"context"
 
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	"github.com/ankitsny/k8s-operator/api/api/v1alpha1"
+	apiv1alpha1 "github.com/ankitsny/k8s-operator/api/api/v1alpha1"
 )
 
-// PodReconciler reconciles a Pod object
-type PodReconciler struct {
+// ConfigurationReconciler reconciles a Configuration object
+type ConfigurationReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 }
 
-//+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=core,resources=pods/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=core,resources=pods/finalizers,verbs=update
+//+kubebuilder:rbac:groups=api.ankitsny.github.io,resources=configurations,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=api.ankitsny.github.io,resources=configurations/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=api.ankitsny.github.io,resources=configurations/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 // TODO(user): Modify the Reconcile function to compare the state specified by
-// the Pod object against the actual cluster state, and then
+// the Configuration object against the actual cluster state, and then
 // perform operations to make the cluster state reflect the state specified by
 // the user.
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.16.3/pkg/reconcile
-func (r *PodReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *ConfigurationReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	l := log.FromContext(ctx)
 
-	pod := &corev1.Pod{}
-
-	if err := r.Get(ctx, req.NamespacedName, pod); err != nil {
+	config := &v1alpha1.Configuration{}
+	if err := r.Get(ctx, req.NamespacedName, config); err != nil {
+		l.Error(err, "failed to fetch the config")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	if pod.Namespace == "default" {
-		pod.Annotations = map[string]string{
-			"ankitsny.github.io/ingress": "true",
-		}
-	}
-
-	if err := r.Update(ctx, pod); err != nil {
-		return ctrl.Result{}, err
-	}
-
-	l.Info("Pod", "Name", pod.Name, "Namespace", pod.Namespace, "Custom", pod.CreationTimestamp.Time, "Annotations", pod.Annotations)
+	l.Info("Reconciling Configuration", "Name", config.Name, "Namespace", config.Namespace, "Type", config.Spec.Type, "Setting", config.Spec.Setting)
 
 	return ctrl.Result{}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *PodReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *ConfigurationReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&corev1.Pod{}).
+		For(&apiv1alpha1.Configuration{}).
 		Complete(r)
 }

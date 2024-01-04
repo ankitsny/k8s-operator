@@ -2,9 +2,10 @@
 # This file is used to track the info used to scaffold your project
 # and allow the plugins properly work.
 # More info: https://book.kubebuilder.io/reference/project-config.html
-domain: ankitsny.github.io/k8s-operator
+domain: ankitsny.github.io
 layout:
 - go.kubebuilder.io/v4
+multigroup: true
 projectName: k8s-operator
 repo: github.com/ankitsny/k8s-operator
 resources:
@@ -13,4 +14,13 @@ resources:
   kind: Pod
   path: k8s.io/api/core/v1
   version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: ankitsny.github.io
+  group: api
+  kind: Configuration
+  path: github.com/ankitsny/k8s-operator/api/api/v1alpha1
+  version: v1alpha1
 version: "3"
